@@ -7,7 +7,7 @@
 markets(market_id = NULL)
 }
 \arguments{
-\item{market_id}{A character string with valid market id}
+\item{market_id}{A character string with valid market id (optional)}
 }
 \value{
 A tibble with a row for each available market on the exchange, if a
@@ -15,9 +15,15 @@ market id is defined the tibble will have a single row with the information
 of the selected market id.
 }
 \description{
-Buda API Available Markets
+\code{markets()} produces a \code{tibble} with the available markets information on Buda
+cripto-exchange, the column names are kept the same as received from the
+exchange.
+
+Detailed descriptions about fields and Buda REST API can be found in
+\link{https://api.buda.com}
 }
 \examples{
 buda_markets <- markets()
 BTC_CLP_market <- markets("BTC-CLP")
+
 }

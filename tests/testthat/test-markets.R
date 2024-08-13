@@ -16,3 +16,25 @@ test_that("markets(some market id) returns a tibble with one row", {
   }
 })
 #> Test passed
+
+test_that("volume() brings a tibble", {
+  expect_type(volume("BTC-CLP"), "list")
+  expect_s3_class(volume("BTC-CLP"), c("tbl_df", "tbl", "data.frame"))
+})
+#> Test passed
+
+test_that("volume() has one row", {
+  expect_true(nrow(volume("BTC-CLP"))==1)
+})
+#> Test passed
+
+test_that("ticker() brings a tibble", {
+  expect_type(ticker("BTC-CLP"), "list")
+  expect_s3_class(ticker("BTC-CLP"), c("tbl_df", "tbl", "data.frame"))
+})
+#> Test passed
+
+test_that("ticker() has one row", {
+  expect_true(nrow(ticker("BTC-CLP"))==1)
+})
+#> Test passed
