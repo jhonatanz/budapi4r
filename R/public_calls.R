@@ -147,3 +147,107 @@ ticker <- function(market_id){
   print(paste("Ticker for market id", market_id, "done"))
   return(df_out)
 }
+
+#' Buda API tickers
+#'
+#' Shows the current state of the whole available markets on the exchange.
+#'
+#' @return A tibble with price information for each market id available on the exchange.
+#' @export
+#'
+#' @examples
+#' all_tickers <- tickers()
+tickers <- function(){
+  resp <- req |>
+    httr2::req_url_path_append("tickers") |>
+    httr2::req_perform()
+  resp_json <- resp |>
+    httr2::resp_body_json()
+  I <- length(resp_json$tickers)
+  for(i in 1:I){
+    J <- length(resp_json$tickers[[i]])
+    for(j in 1:J){
+      if(is.null(resp_json$tickers[[i]][[j]])){
+        resp_json$tickers[[i]][[j]] <- FALSE
+      }
+      if(is.list(resp_json$tickers[[i]][[j]])){
+        resp_json$tickers[[i]][[j]] <- paste(resp_json$tickers[[i]][[j]], collapse = " ")
+      }
+    }
+  }
+  df_out <- purrr::map_df(resp_json$tickers, \(x) tibble::as_tibble_row(x))
+  return(df_out)
+}
+
+#' Buda API Orders Book
+#'
+#' Gets the list of active (open) orders on the selected market
+#'
+#' @param market_id A character string with valid market id (required)
+#'
+#' @return A tibble with the active orders for the selected market. Order type "ask" refers to sells and order type "bids" refers to buys.
+#' @export
+#'
+#' @examples
+#' BTC_COP_orders_book <- orders_book("BTC-COP")
+orders_book <- function(market_id){
+  resp <- req |>
+    httr2::req_url_path_append("markets") |>
+    httr2::req_url_path_append(market_id) |>
+    httr2::req_url_path_append("order_book") |>
+    httr2::req_perform()
+  resp_json <- resp |>
+    httr2::resp_body_json()
+  ask <- purrr::map_df(resp_json$order_book$asks,
+                    function(x){
+                      t1 <- unlist(x)
+                      names(t1) <- c("price", "amount")
+                      return(t1)
+                    }) |>
+    dplyr::mutate(order_type = "ask")
+  bid <- purrr::map_df(resp_json$order_book$bids,
+                       function(x){
+                         t1 <- unlist(x)
+                         names(t1) <- c("price", "amount")
+                         return(t1)
+                       }) |>
+    dplyr::mutate(order_type = "bid")
+  df_out <- dplyr::bind_rows(ask, bid) |>
+    dplyr::mutate(market_id = market_id,
+                  price = as.numeric(price),
+                  amount = as.numeric(amount))
+  return(df_out)
+}
+
+#' Buad API last trades
+#'
+#' Gets the list of the last trades on a specific market
+#'
+#' @param market_id A character string with valid market id (required)
+#'
+#' @return A tibble with the last trades for the selected market.
+#' @export
+#'
+#' @examples
+#' BTC_USDC_trades <- trades("BTC-USDC")
+trades <- function(market_id){
+  resp <- req |>
+    httr2::req_url_path_append("markets") |>
+    httr2::req_url_path_append(market_id) |>
+    httr2::req_url_path_append("trades") |>
+    httr2::req_perform()
+  resp_json <- resp |>
+    httr2::resp_body_json()
+  df_out <- purrr::map_df(resp_json$trades$entries,
+                          function(x){
+                            t1 <- unlist(x)
+                            names(t1) <- c("timestamp", "amount", "price", "order_type", "trade_number")
+                            return(t1)
+                          }) |>
+    dplyr::mutate(timestamp = as.POSIXct(as.numeric(timestamp)/1000, origin = "1970-01-01"),
+                  amount = as.numeric(amount),
+                  price = as.numeric(price),
+                  trade_number = as.integer(trade_number),
+                  market_id = resp_json$trades$market_id)
+  return(df_out)
+}

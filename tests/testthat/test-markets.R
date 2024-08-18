@@ -38,3 +38,25 @@ test_that("ticker() has one row", {
   expect_true(nrow(ticker("BTC-CLP"))==1)
 })
 #> Test passed
+
+test_that("tickers() brings a tibble", {
+  expect_type(tickers(), "list")
+  expect_s3_class(tickers(), c("tbl_df", "tbl", "data.frame"))
+})
+#> Test passed
+
+test_that("tickers() has one or more rows", {
+  expect_true(nrow(tickers())>=1)
+})
+#> Test passed
+
+test_that("orders_book(some market) brings a tibble", {
+  expect_type(orders_book("BTC-CLP"), "list")
+  expect_s3_class(orders_book("BTC-CLP"), c("tbl_df", "tbl", "data.frame"))
+})
+#> Test passed
+
+test_that("orders_book(some market) has one or more rows", {
+  expect_true(nrow(orders_book("BTC-CLP"))>=1)
+})
+#> Test passed
